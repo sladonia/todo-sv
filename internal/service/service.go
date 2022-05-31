@@ -77,7 +77,7 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("get project invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -86,7 +86,7 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 			s.log.Info("failed to retrieve project", zap.Error(err))
 		}
 
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	if p.OwnerID != r.UserId {
@@ -95,7 +95,7 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 			zap.String("user_id", r.UserId),
 			zap.String("project_id", r.ProjectId),
 		)
-		return nil, status.Error(codes.PermissionDenied, "user has not modify access wrights to the project")
+		return empty(), status.Error(codes.PermissionDenied, "user has not modify access wrights to the project")
 	}
 
 	updated := UpdateProject(p, r)
@@ -106,7 +106,7 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 		return nil, s.wrapError(err)
 	}
 
-	return nil, nil
+	return empty(), nil
 }
 
 func (s *service) AllProjects(ctx context.Context, r *todopb.AllProjectsRequest) (*todopb.AllProjectsResponse, error) {
@@ -129,7 +129,7 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("add task invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -138,7 +138,7 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 			s.log.Info("failed to retrieve project", zap.Error(err))
 		}
 
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	if !p.CanEdit(r.UserId) {
@@ -154,17 +154,17 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 	err = s.storage.Replace(ctx, p, updatedProject)
 	if err != nil {
 		s.log.Info("failed to update project", zap.Error(err))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
-	return nil, nil
+	return empty(), nil
 }
 
 func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (*emptypb.Empty, error) {
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("update task invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -173,11 +173,11 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 			s.log.Info("failed to retrieve project", zap.Error(err))
 		}
 
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	if !p.CanEdit(r.UserId) {
-		return nil, status.Error(
+		return empty(), status.Error(
 			codes.PermissionDenied,
 			fmt.Sprintf("user %s has no access to %s project", r.UserId, r.ProjectId),
 		)
@@ -185,7 +185,7 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 
 	task, ok := p.Tasks[r.TaskId]
 	if !ok {
-		return nil, status.Error(
+		return empty(), status.Error(
 			codes.NotFound,
 			fmt.Sprintf("task_id=%s not found in project_id=%s", r.TaskId, r.ProjectId),
 		)
@@ -197,17 +197,17 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 	err = s.storage.Replace(ctx, p, updatedProject)
 	if err != nil {
 		s.log.Info("failed to update project", zap.Error(err))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
-	return nil, nil
+	return empty(), nil
 }
 
 func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (*emptypb.Empty, error) {
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("delete task invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -216,7 +216,7 @@ func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (
 			s.log.Info("failed to retrieve project", zap.Error(err))
 		}
 
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	if !p.CanEdit(r.UserId) {
@@ -231,17 +231,17 @@ func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (
 	err = s.storage.Replace(ctx, p, updatedProject)
 	if err != nil {
 		s.log.Info("failed to update project", zap.Error(err))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
-	return nil, nil
+	return empty(), nil
 }
 
 func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequest) (*emptypb.Empty, error) {
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("delete project invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -250,11 +250,11 @@ func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequ
 			s.log.Info("failed to retrieve project", zap.Error(err))
 		}
 
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
 	if p.OwnerID != r.UserId {
-		return nil, status.Error(
+		return empty(), status.Error(
 			codes.PermissionDenied,
 			fmt.Sprintf("user %s has no access to delete %s project", r.UserId, r.ProjectId),
 		)
@@ -263,10 +263,10 @@ func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequ
 	err = s.storage.Delete(ctx, r.ProjectId)
 	if err != nil {
 		s.log.Info("failed to delete project", zap.Error(err))
-		return nil, s.wrapError(err)
+		return empty(), s.wrapError(err)
 	}
 
-	return nil, nil
+	return empty(), nil
 }
 
 func (s *service) SubscribeToProjectsUpdates(
@@ -319,4 +319,8 @@ func (s *service) wrapError(err error) error {
 	}
 
 	return status.Error(codes.Internal, err.Error())
+}
+
+func empty() *emptypb.Empty {
+	return &emptypb.Empty{}
 }

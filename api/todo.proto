@@ -1,0 +1,111 @@
+syntax = 'proto3';
+
+package todo;
+
+option go_package = "/todopb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "validate/validate.proto";
+
+service ToDoService {
+  rpc CreateProject(CreateProjectRequest) returns (Project) {};
+  rpc GetProject(GetProjectRequest) returns (Project) {};
+  rpc UpdateProject(UpdateProjectRequest) returns (google.protobuf.Empty) {};
+  rpc AllProjects(AllProjectsRequest) returns (AllProjectsResponse) {};
+  rpc AddTask(AddTaskRequest) returns (google.protobuf.Empty) {};
+  rpc UpdateTask(UpdateTaskRequest) returns (google.protobuf.Empty) {};
+  rpc DeleteTask(DeleteTaskRequest) returns (google.protobuf.Empty) {};
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty) {};
+  rpc SubscribeToProjectsUpdates(ProjectsUpdatesRequest) returns (stream Project) {};
+}
+
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  repeated string tags = 4;
+  bool is_important = 5;
+  bool is_finished = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  string version = 9;
+}
+
+message Project {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3;
+  repeated string participants = 4;
+  map<string, Task> tasks = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  string version = 8;
+}
+
+message CreateProjectRequest {
+  string name = 1 [(validate.rules).string.min_bytes = 1];
+  string owner_id = 2 [(validate.rules).string.min_bytes = 1];
+  repeated string participants = 3;
+}
+
+message UpdateProjectRequest {
+  string project_id = 1 [(validate.rules).string.min_bytes = 1];
+  string user_id = 2 [(validate.rules).string.min_bytes = 1];
+  string name = 3;
+  string owner_id = 4;
+  repeated string participants = 5;
+  google.protobuf.FieldMask field_mask = 6;
+}
+
+message AllProjectsRequest {
+  string user_id = 1 [(validate.rules).string.min_bytes = 1];
+  google.protobuf.FieldMask field_mask = 2;
+}
+
+message GetProjectRequest {
+  string user_id = 1 [(validate.rules).string.min_bytes = 1];
+  string project_id = 2 [(validate.rules).string.min_bytes = 1];
+  google.protobuf.FieldMask field_mask = 3;
+}
+
+message AllProjectsResponse {
+  repeated Project projects = 1;
+}
+
+message AddTaskRequest {
+  string title = 1 [(validate.rules).string.min_bytes = 1];
+  string project_id = 2 [(validate.rules).string.min_bytes = 1];
+  string user_id = 3 [(validate.rules).string.min_bytes = 1];
+  string description = 4;
+  repeated string tags = 5;
+  bool is_important = 6;
+}
+
+message UpdateTaskRequest {
+  string task_id = 1 [(validate.rules).string.min_bytes = 1];
+  string project_id = 2 [(validate.rules).string.min_bytes = 1];
+  string user_id = 3 [(validate.rules).string.min_bytes = 1];
+  string title = 4;
+  string description = 5;
+  repeated string tags = 6;
+  bool is_important = 7;
+  bool is_finished = 8;
+  google.protobuf.FieldMask field_mask = 9;
+}
+
+message DeleteTaskRequest {
+  string project_id = 1 [(validate.rules).string.min_bytes = 1];
+  string task_id = 2 [(validate.rules).string.min_bytes = 1];
+  string user_id = 3 [(validate.rules).string.min_bytes = 1];
+}
+
+message DeleteProjectRequest {
+  string project_id = 1 [(validate.rules).string.min_bytes = 1];
+  string user_id = 2 [(validate.rules).string.min_bytes = 1];
+}
+
+message ProjectsUpdatesRequest {
+  string user_id = 1 [(validate.rules).string.min_bytes = 1];
+}

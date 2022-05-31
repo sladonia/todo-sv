@@ -1,4 +1,4 @@
-pb:
-	protoc -I=proto --go_out=pkg --go-grpc_out=pkg proto/todo/*.proto
+gen:
+	cd api; buf generate
 
-.PHONY: pb
+.PHONY: gen

@@ -1,0 +1,15 @@
+version: v1
+plugins:
+  - name: go
+    out: ../pkg/todopb
+    opt:
+      - paths=source_relative
+  - name: go-grpc
+    out: ../pkg/todopb
+    opt:
+      - paths=source_relative
+  - name: validate
+    out: ../pkg/todopb
+    opt:
+      - lang=go
+      - paths=source_relative

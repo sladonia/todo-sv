@@ -6,8 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sladonia/todo-sv/internal/logger"
-	"github.com/sladonia/todo-sv/internal/service"
 	"github.com/sladonia/todo-sv/internal/todo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -17,7 +15,7 @@ func main() {
 	var (
 		ctx, cancel = signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		config      = mustLoadConfig()
-		log         = logger.MustCreateZapLogger(config.LogLevel)
+		log         = mustCreateZapLogger(config.LogLevel)
 	)
 
 	defer cancel()
@@ -25,8 +23,9 @@ func main() {
 
 	var (
 		listener       = mustCreateListener(log, config)
-		projectStorage = todo.NewInMemoryStorage()
-		todoService    = service.NewService(log, projectStorage)
+		db             = mustConnectToMongo(ctx, log, config)
+		projectStorage = todo.NewStorage(db, config.Mongo.ProjectsCollectionName)
+		todoService    = todo.NewService(log, projectStorage)
 		grpcServer     = newGRPCServer(todoService)
 	)
 

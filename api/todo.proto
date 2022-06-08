@@ -61,13 +61,11 @@ message UpdateProjectRequest {
 
 message AllProjectsRequest {
   string user_id = 1 [(validate.rules).string.min_bytes = 1];
-  google.protobuf.FieldMask field_mask = 2;
 }
 
 message GetProjectRequest {
   string user_id = 1 [(validate.rules).string.min_bytes = 1];
   string project_id = 2 [(validate.rules).string.min_bytes = 1];
-  google.protobuf.FieldMask field_mask = 3;
 }
 
 message AllProjectsResponse {

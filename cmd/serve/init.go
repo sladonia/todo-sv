@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 
+	"github.com/sladonia/common-lb/logger"
+	"github.com/sladonia/todo-sv/internal/mongodb"
 	"github.com/sladonia/todo-sv/pkg/todopb"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -20,8 +24,28 @@ func newGRPCServer(todoService todopb.ToDoServiceServer) *grpc.Server {
 func mustCreateListener(log *zap.Logger, config Config) net.Listener {
 	lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", config.Port))
 	if err != nil {
-		log.Panic("failed to create net listener", zap.Error(err))
+		log.Panic("create net listener", zap.Error(err))
 	}
 
 	return lis
+}
+
+func mustCreateZapLogger(logLevel string) *zap.Logger {
+	log, err := logger.NewZap(logLevel)
+	if err != nil {
+		panic(err)
+	}
+
+	return log
+}
+
+func mustConnectToMongo(ctx context.Context, log *zap.Logger, config Config) *mongo.Database {
+	ctx, _ = context.WithTimeout(ctx, config.Mongo.ConnectTimeout)
+
+	db, err := mongodb.Connect(ctx, config.Mongo.DSN, config.Mongo.ToDoDatabaseName)
+	if err != nil {
+		log.Panic("connect to mongo", zap.Error(err))
+	}
+
+	return db
 }

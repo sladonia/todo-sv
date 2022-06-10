@@ -116,3 +116,5 @@ func (s *mongoStorage) Delete(ctx context.Context, projectID string) error {
 func (s *mongoStorage) collection() *mongo.Collection {
 	return s.db.Collection(s.colName)
 }
+
+//TODO: add unique indexes

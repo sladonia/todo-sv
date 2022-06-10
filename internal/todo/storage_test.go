@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	projectDBName          = "project_test"
-	projectsCollectionName = "projects"
+	projectDBName          = "todo_test"
+	projectsCollectionName = "projects_test"
 )
 
 var projectFixture1 = &todopb.Project{
@@ -48,7 +48,7 @@ var projectFixtureInserted1 = &todopb.Project{
 
 var projectFixtureInserted2 = &todopb.Project{
 	Id:           "3",
-	Name:         "to-buy",
+	Name:         "different",
 	OwnerId:      "2",
 	Participants: []string{"3"},
 	Tasks:        map[string]*todopb.Task{},

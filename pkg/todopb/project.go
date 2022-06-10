@@ -70,6 +70,18 @@ func (x *Project) Update(r *UpdateProjectRequest) *Project {
 	return &updated
 }
 
+func (x *Project) TaskList() []*Task {
+	taskList := make([]*Task, len(x.Tasks))
+
+	i := 0
+	for _, task := range x.Tasks {
+		taskList[i] = task
+		i++
+	}
+
+	return taskList
+}
+
 func (x *Project) CanEdit(userID string) bool {
 	if x.OwnerId == userID {
 		return true

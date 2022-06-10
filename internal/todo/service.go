@@ -31,7 +31,7 @@ func (s *service) CreateProject(ctx context.Context, r *todopb.CreateProjectRequ
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("create project invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	project := todopb.NewProject(r)
@@ -54,7 +54,7 @@ func (s *service) GetProject(ctx context.Context, r *todopb.GetProjectRequest) (
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("get project invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -84,7 +84,7 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("update project invalid request", zap.String("error", err.Error()))
-		return empty(), s.wrapError(err)
+		return empty(), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -125,7 +125,7 @@ func (s *service) AllProjects(ctx context.Context, r *todopb.AllProjectsRequest)
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("get all projects invalid request", zap.String("error", err.Error()))
-		return nil, s.wrapError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	projects, err := s.storage.AllUserProjects(ctx, r.UserId)
@@ -143,7 +143,7 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("add task invalid request", zap.String("error", err.Error()))
-		return empty(), s.wrapError(err)
+		return empty(), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -183,7 +183,7 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("update task invalid request", zap.String("error", err.Error()))
-		return empty(), s.wrapError(err)
+		return empty(), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -231,7 +231,7 @@ func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("delete task invalid request", zap.String("error", err.Error()))
-		return empty(), s.wrapError(err)
+		return empty(), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -270,7 +270,7 @@ func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequ
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("delete project invalid request", zap.String("error", err.Error()))
-		return empty(), s.wrapError(err)
+		return empty(), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	p, err := s.storage.ByID(ctx, r.ProjectId)
@@ -279,7 +279,7 @@ func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequ
 			s.log.Error("failed to retrieve project", zap.Error(err))
 		}
 
-		return empty(), s.wrapError(err)
+		return empty(), nil
 	}
 
 	if !p.IsOwner(r.UserId) {
@@ -310,7 +310,7 @@ func (s *service) SubscribeToProjectsUpdates(
 	err := r.ValidateAll()
 	if err != nil {
 		s.log.Debug("subscribe to project updates invalid request", zap.String("error", err.Error()))
-		return s.wrapError(err)
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	_, err = s.storage.AllUserProjects(updateServer.Context(), r.UserId)
@@ -337,11 +337,7 @@ func (s *service) wrapError(err error) error {
 		return nil
 	}
 
-	var validationError todopb.CreateProjectRequestMultiError
-
 	switch {
-	case errors.As(err, &validationError):
-		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, ErrProjectNotFound):
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, ErrAlreadyExists):

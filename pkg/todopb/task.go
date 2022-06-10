@@ -33,7 +33,14 @@ func (x *Task) UpdateTask(r *UpdateTaskRequest) *Task {
 	updated := *x
 
 	fm := r.FieldMask
-	fieldSet := set.NewSet(fm.Paths...)
+
+	var fieldSet *set.Set
+
+	if fm != nil {
+		fieldSet = set.NewSet(fm.Paths...)
+	} else {
+		fieldSet = set.NewSet()
+	}
 
 	if fieldSet.Contains(UpdateTaskTitleField) || fieldSet.IsEmpty() {
 		updated.Title = r.Title

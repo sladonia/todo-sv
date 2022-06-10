@@ -1,6 +1,8 @@
 package set
 
 import (
+	"reflect"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
@@ -39,6 +41,10 @@ func (s *Set) Remove(vals ...string) {
 	for _, val := range vals {
 		delete(s.data, val)
 	}
+}
+
+func (s *Set) IsEqual(other *Set) bool {
+	return reflect.DeepEqual(s.data, other.data)
 }
 
 func (s *Set) ReplaceValues(vals ...string) {

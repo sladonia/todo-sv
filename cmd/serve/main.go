@@ -24,8 +24,9 @@ func main() {
 	var (
 		listener       = mustCreateListener(log, config)
 		db             = mustConnectToMongo(ctx, log, config)
+		pubSub         = todo.NewInMemoryPubSub()
 		projectStorage = todo.NewStorage(db, config.Mongo.ProjectsCollectionName)
-		todoService    = todo.NewService(log, projectStorage)
+		todoService    = todo.NewService(log, projectStorage, pubSub)
 		grpcServer     = newGRPCServer(todoService)
 	)
 

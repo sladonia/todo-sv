@@ -68,6 +68,7 @@ type Suite struct {
 	mongoContainer dockertool.Container
 	mongoDSN       string
 	storage        todo.Storage
+	pubSub         todo.PubSub
 	service        todopb.ToDoServiceServer
 }
 
@@ -107,7 +108,8 @@ func (s *Suite) SetupSuite() {
 	}
 
 	s.storage = todo.NewStorage(s.db, projectsCollectionName)
-	s.service = todo.NewService(s.log, s.storage)
+	s.pubSub = todo.NewInMemoryPubSub()
+	s.service = todo.NewService(s.log, s.storage, s.pubSub)
 }
 
 func (s *Suite) TearDownSuite() {

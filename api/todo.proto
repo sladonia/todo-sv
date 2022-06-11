@@ -106,4 +106,5 @@ message DeleteProjectRequest {
 
 message ProjectsUpdatesRequest {
   string user_id = 1 [(validate.rules).string.min_bytes = 1];
+  string device_id =2 [(validate.rules).string.min_bytes = 1];
 }

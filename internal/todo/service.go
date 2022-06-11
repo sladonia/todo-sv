@@ -15,13 +15,15 @@ import (
 type service struct {
 	todopb.UnimplementedToDoServiceServer
 	storage Storage
+	pubSub  PubSub
 	log     *zap.Logger
 }
 
-func NewService(log *zap.Logger, storage Storage) todopb.ToDoServiceServer {
+func NewService(log *zap.Logger, storage Storage, pubSub PubSub) todopb.ToDoServiceServer {
 	return &service{
 		storage: storage,
 		log:     log,
+		pubSub:  pubSub,
 	}
 }
 
@@ -42,6 +44,12 @@ func (s *service) CreateProject(ctx context.Context, r *todopb.CreateProjectRequ
 			s.log.Error("failed to insert project to db", zap.String("error", err.Error()))
 		}
 
+		return nil, s.wrapError(err)
+	}
+
+	err = s.pubSub.Publish(ctx, project)
+	if err != nil {
+		s.log.Error("publish project", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -116,6 +124,12 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 		return nil, s.wrapError(err)
 	}
 
+	err = s.pubSub.Publish(ctx, updated)
+	if err != nil {
+		s.log.Error("publish project", zap.Error(err))
+		return nil, s.wrapError(err)
+	}
+
 	return empty(), nil
 }
 
@@ -174,6 +188,12 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 		return empty(), s.wrapError(err)
 	}
 
+	err = s.pubSub.Publish(ctx, updatedProject)
+	if err != nil {
+		s.log.Error("publish project", zap.Error(err))
+		return nil, s.wrapError(err)
+	}
+
 	return empty(), nil
 }
 
@@ -222,6 +242,12 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 		return empty(), s.wrapError(err)
 	}
 
+	err = s.pubSub.Publish(ctx, updatedProject)
+	if err != nil {
+		s.log.Error("publish project", zap.Error(err))
+		return nil, s.wrapError(err)
+	}
+
 	return empty(), nil
 }
 
@@ -259,6 +285,12 @@ func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (
 		}
 
 		return empty(), s.wrapError(err)
+	}
+
+	err = s.pubSub.Publish(ctx, updatedProject)
+	if err != nil {
+		s.log.Error("publish project", zap.Error(err))
+		return nil, s.wrapError(err)
 	}
 
 	return empty(), nil
@@ -313,22 +345,30 @@ func (s *service) SubscribeToProjectsUpdates(
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	_, err = s.storage.AllUserProjects(updateServer.Context(), r.UserId)
+	projectsCh, err := s.pubSub.Subscribe(updateServer.Context(), fmt.Sprintf("%s:%s", r.UserId, r.DeviceId))
 	if err != nil {
-		s.log.Error("failed retrieve user projects", zap.Error(err))
+		s.log.Error("failed to subscribe", zap.Error(err))
 		return s.wrapError(err)
 	}
 
-	// TODO: implement subscription
-
+Loop:
 	for {
 		select {
 		case <-updateServer.Context().Done():
-			s.log.Debug("subscribe to project context done", zap.String("error", err.Error()))
-			return nil
+			break Loop
+		case p, ok := <-projectsCh:
+			if !ok {
+				break Loop
+			}
+
+			err := updateServer.Send(p)
+			if err != nil {
+				s.log.Error("failed to send project", zap.Error(err))
+			}
 		}
 	}
 
+	s.log.Debug("subscription canceled", zap.String("error", err.Error()))
 	return nil
 }
 

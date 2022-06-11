@@ -82,6 +82,13 @@ func (x *Project) TaskList() []*Task {
 	return taskList
 }
 
+func (x *Project) ParticipantsIDs() []string {
+	participants := set.NewSet(x.Participants...)
+	participants.Add(x.OwnerId)
+
+	return participants.Values()
+}
+
 func (x *Project) CanEdit(userID string) bool {
 	if x.OwnerId == userID {
 		return true

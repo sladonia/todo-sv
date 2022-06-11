@@ -1668,6 +1668,17 @@ func (m *ProjectsUpdatesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if len(m.GetDeviceId()) < 1 {
+		err := ProjectsUpdatesRequestValidationError{
+			field:  "DeviceId",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return ProjectsUpdatesRequestMultiError(errors)
 	}

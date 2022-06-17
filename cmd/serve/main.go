@@ -22,24 +22,37 @@ func main() {
 	defer log.Sync()
 
 	var (
-		listener       = mustCreateListener(log, config)
-		db             = mustConnectToMongo(ctx, log, config)
-		pubSub         = todo.NewInMemoryPubSub()
-		projectStorage = todo.NewStorage(db, config.Mongo.ProjectsCollectionName)
-		todoService    = todo.NewService(log, projectStorage, pubSub)
-		grpcServer     = newGRPCServer(todoService)
+		listener         = mustCreateListener(log, config)
+		db               = mustConnectToMongo(ctx, log, config)
+		pubSub           = mustCreatePubSub(log, config)
+		eventDistributor = newUserEventDistributor(log, config, pubSub, pubSub)
+		projectStorage   = todo.NewStorage(db, config.Mongo.ProjectsCollectionName)
+		todoService      = todo.NewService(log, projectStorage, pubSub)
+		grpcServer       = newGRPCServer(todoService)
 	)
 
-	run(ctx, log, config, grpcServer, listener)
+	run(ctx, log, config, grpcServer, listener, eventDistributor)
 
 }
 
-func run(ctx context.Context, log *zap.Logger, config Config, grpcServer *grpc.Server, lis net.Listener) {
+func run(
+	ctx context.Context,
+	log *zap.Logger,
+	config Config,
+	grpcServer *grpc.Server,
+	lis net.Listener,
+	eventDistributor *todo.UserEventsDistributor,
+) {
 	errCh := make(chan error)
 
 	go func() {
-		log.Info("start listening", zap.String("port", config.Port))
+		log.Info("start listening grpc server", zap.String("port", config.Port))
 		errCh <- grpcServer.Serve(lis)
+	}()
+
+	go func() {
+		log.Info("start event distributor")
+		errCh <- eventDistributor.Start(ctx)
 	}()
 
 	select {

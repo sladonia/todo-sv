@@ -108,7 +108,7 @@ func (s *Suite) SetupSuite() {
 	}
 
 	s.storage = todo.NewStorage(s.db, projectsCollectionName)
-	s.pubSub = todo.NewInMemoryPubSub()
+	s.pubSub = todo.NewNopPubSub()
 	s.service = todo.NewService(s.log, s.storage, s.pubSub)
 }
 

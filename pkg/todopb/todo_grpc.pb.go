@@ -130,7 +130,7 @@ func (c *toDoServiceClient) SubscribeToProjectsUpdates(ctx context.Context, in *
 }
 
 type ToDoService_SubscribeToProjectsUpdatesClient interface {
-	Recv() (*Project, error)
+	Recv() (*Event, error)
 	grpc.ClientStream
 }
 
@@ -138,8 +138,8 @@ type toDoServiceSubscribeToProjectsUpdatesClient struct {
 	grpc.ClientStream
 }
 
-func (x *toDoServiceSubscribeToProjectsUpdatesClient) Recv() (*Project, error) {
-	m := new(Project)
+func (x *toDoServiceSubscribeToProjectsUpdatesClient) Recv() (*Event, error) {
+	m := new(Event)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func _ToDoService_SubscribeToProjectsUpdates_Handler(srv interface{}, stream grp
 }
 
 type ToDoService_SubscribeToProjectsUpdatesServer interface {
-	Send(*Project) error
+	Send(*Event) error
 	grpc.ServerStream
 }
 
@@ -367,7 +367,7 @@ type toDoServiceSubscribeToProjectsUpdatesServer struct {
 	grpc.ServerStream
 }
 
-func (x *toDoServiceSubscribeToProjectsUpdatesServer) Send(m *Project) error {
+func (x *toDoServiceSubscribeToProjectsUpdatesServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 

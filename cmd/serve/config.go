@@ -15,12 +15,18 @@ type Mongo struct {
 	ConnectTimeout         time.Duration `default:"3s" env:"MONGO_CONNECT_TIMEOUT"`
 }
 
+type Nats struct {
+	DSN             string `default:"nats://127.0.0.1:4222" env:"NATS_DSN"`
+	UserWorkerGroup string `default:"user-worker-group" env:"NATS_USER_WORKER_GROUP"`
+}
+
 type Config struct {
 	ServiceName     string        `default:"todo-sv" env:"SERVICE_NAME"`
 	LogLevel        string        `default:"debug" env:"LOG_LEVEL"`
 	Port            string        `default:"8080" env:"PORT"`
 	ShutdownTimeout time.Duration `default:"5s" env:"SHUTDOWN_TIMEOUT"`
 	Mongo           Mongo
+	Nats            Nats
 }
 
 func mustLoadConfig() Config {

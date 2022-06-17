@@ -7,6 +7,7 @@ import (
 
 	"github.com/sladonia/common-lb/logger"
 	"github.com/sladonia/todo-sv/internal/mongodb"
+	"github.com/sladonia/todo-sv/internal/todo"
 	"github.com/sladonia/todo-sv/pkg/todopb"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -48,4 +49,28 @@ func mustConnectToMongo(ctx context.Context, log *zap.Logger, config Config) *mo
 	}
 
 	return db
+}
+
+func newUserEventDistributor(
+	log *zap.Logger,
+	config Config,
+	publisher todo.Publisher,
+	workerSubscriber todo.WorkerSubscriber,
+) *todo.UserEventsDistributor {
+	return todo.NewUserEventsDistributor(
+		config.Nats.UserWorkerGroup,
+		todopb.NewProjectSubject("*", "*"),
+		workerSubscriber,
+		publisher,
+		log,
+	)
+}
+
+func mustCreatePubSub(log *zap.Logger, config Config) todo.PubSub {
+	pubSub, err := todo.NewNatsPubSub(config.Nats.DSN)
+	if err != nil {
+		log.Panic("connect to nats", zap.Error(err))
+	}
+
+	return pubSub
 }

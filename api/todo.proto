@@ -18,7 +18,7 @@ service ToDoService {
   rpc UpdateTask(UpdateTaskRequest) returns (google.protobuf.Empty) {};
   rpc DeleteTask(DeleteTaskRequest) returns (google.protobuf.Empty) {};
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty) {};
-  rpc SubscribeToProjectsUpdates(ProjectsUpdatesRequest) returns (stream Project) {};
+  rpc SubscribeToProjectsUpdates(ProjectsUpdatesRequest) returns (stream Event) {};
 }
 
 message Task {
@@ -42,6 +42,19 @@ message Project {
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
   string version = 8;
+}
+
+message Event {
+  string id = 1;
+  EventType type = 2;
+  Project Project = 3;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+enum EventType {
+  PROJECT_CREATED = 0;
+  PROJECT_UPDATED = 1;
+  PROJECT_DELETED = 2;
 }
 
 message CreateProjectRequest {

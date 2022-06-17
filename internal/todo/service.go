@@ -47,9 +47,11 @@ func (s *service) CreateProject(ctx context.Context, r *todopb.CreateProjectRequ
 		return nil, s.wrapError(err)
 	}
 
-	err = s.pubSub.Publish(ctx, project)
+	ev := todopb.NewProjectCreatedEvent(project)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), project.Id), ev)
 	if err != nil {
-		s.log.Error("publish project", zap.Error(err))
+		s.log.Error("publish project created event", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -113,9 +115,9 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 		return empty(), status.Error(codes.PermissionDenied, "user has not modify access wrights to the project")
 	}
 
-	updated := p.Update(r)
+	updatedProject := p.Update(r)
 
-	err = s.storage.Replace(ctx, p, updated)
+	err = s.storage.Replace(ctx, p, updatedProject)
 	if err != nil {
 		if !IsStorageError(err) {
 			s.log.Error("failed to replace project", zap.String("error", err.Error()))
@@ -124,9 +126,11 @@ func (s *service) UpdateProject(ctx context.Context, r *todopb.UpdateProjectRequ
 		return nil, s.wrapError(err)
 	}
 
-	err = s.pubSub.Publish(ctx, updated)
+	ev := todopb.NewProjectUpdatedEvent(updatedProject)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), updatedProject.Id), ev)
 	if err != nil {
-		s.log.Error("publish project", zap.Error(err))
+		s.log.Error("publish project updated event", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -188,9 +192,11 @@ func (s *service) AddTask(ctx context.Context, r *todopb.AddTaskRequest) (*empty
 		return empty(), s.wrapError(err)
 	}
 
-	err = s.pubSub.Publish(ctx, updatedProject)
+	ev := todopb.NewProjectUpdatedEvent(updatedProject)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), updatedProject.Id), ev)
 	if err != nil {
-		s.log.Error("publish project", zap.Error(err))
+		s.log.Error("publish project updated event", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -242,9 +248,11 @@ func (s *service) UpdateTask(ctx context.Context, r *todopb.UpdateTaskRequest) (
 		return empty(), s.wrapError(err)
 	}
 
-	err = s.pubSub.Publish(ctx, updatedProject)
+	ev := todopb.NewProjectUpdatedEvent(updatedProject)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), updatedProject.Id), ev)
 	if err != nil {
-		s.log.Error("publish project", zap.Error(err))
+		s.log.Error("publish project updated event", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -287,9 +295,11 @@ func (s *service) DeleteTask(ctx context.Context, r *todopb.DeleteTaskRequest) (
 		return empty(), s.wrapError(err)
 	}
 
-	err = s.pubSub.Publish(ctx, updatedProject)
+	ev := todopb.NewProjectUpdatedEvent(updatedProject)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), updatedProject.Id), ev)
 	if err != nil {
-		s.log.Error("publish project", zap.Error(err))
+		s.log.Error("publish project updated event", zap.Error(err))
 		return nil, s.wrapError(err)
 	}
 
@@ -330,6 +340,14 @@ func (s *service) DeleteProject(ctx context.Context, r *todopb.DeleteProjectRequ
 		return empty(), s.wrapError(err)
 	}
 
+	ev := todopb.NewProjectDeletedEvent(p)
+
+	err = s.pubSub.Publish(ctx, todopb.NewProjectSubject(ev.Type.String(), r.ProjectId), ev)
+	if err != nil {
+		s.log.Error("publish project deleted event", zap.Error(err))
+		return nil, s.wrapError(err)
+	}
+
 	return empty(), nil
 }
 
@@ -345,7 +363,10 @@ func (s *service) SubscribeToProjectsUpdates(
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	projectsCh, err := s.pubSub.Subscribe(updateServer.Context(), fmt.Sprintf("%s:%s", r.UserId, r.DeviceId))
+	eventCh, err := s.pubSub.Subscribe(
+		updateServer.Context(),
+		todopb.NewUserEventsSubject("*", r.UserId),
+	)
 	if err != nil {
 		s.log.Error("failed to subscribe", zap.Error(err))
 		return s.wrapError(err)
@@ -356,19 +377,20 @@ Loop:
 		select {
 		case <-updateServer.Context().Done():
 			break Loop
-		case p, ok := <-projectsCh:
+		case event, ok := <-eventCh:
 			if !ok {
 				break Loop
 			}
 
-			err := updateServer.Send(p)
+			err := updateServer.Send(event)
 			if err != nil {
-				s.log.Error("failed to send project", zap.Error(err))
+				s.log.Error("failed to send event", zap.Error(err))
 			}
 		}
 	}
 
-	s.log.Debug("subscription canceled", zap.String("error", err.Error()))
+	s.log.Debug("subscription canceled")
+
 	return nil
 }
 

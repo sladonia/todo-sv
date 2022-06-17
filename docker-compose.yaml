@@ -10,6 +10,12 @@ services:
     ports:
       - '27017:27017'
 
+  nats:
+    image: nats:2-alpine
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+
 volumes:
   mongo-data:
     driver: local

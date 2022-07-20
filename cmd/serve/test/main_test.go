@@ -66,6 +66,7 @@ type Suite struct {
 	dockerPool     *dockertest.Pool
 	db             *mongo.Database
 	mongoContainer dockertool.Container
+	natsContainer  dockertool.Container
 	mongoDSN       string
 	storage        todo.Storage
 	pubSub         todo.PubSub

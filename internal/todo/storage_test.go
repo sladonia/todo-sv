@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/sladonia/common-lb/dockertool"
-	"github.com/sladonia/common-lb/dockertool/dockermongo"
 	"github.com/sladonia/common-lb/logger"
+	"github.com/sladonia/dockert"
+	"github.com/sladonia/dockert/container"
 	"github.com/sladonia/todo-sv/internal/mongodb"
 	"github.com/sladonia/todo-sv/pkg/todopb"
 	"github.com/stretchr/testify/suite"
@@ -63,7 +63,7 @@ type Suite struct {
 	log            *zap.Logger
 	dockerPool     *dockertest.Pool
 	db             *mongo.Database
-	mongoContainer dockertool.Container
+	mongoContainer dockert.Container
 	mongoDSN       string
 	storage        Storage
 }
@@ -81,7 +81,7 @@ func (s *Suite) SetupSuite() {
 		s.log.Panic("init docker pool", zap.Error(err))
 	}
 
-	s.mongoContainer = dockermongo.NewDefault(s.log)
+	s.mongoContainer = container.NewMongo()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -91,7 +91,7 @@ func (s *Suite) SetupSuite() {
 		s.log.Panic("start mongo container", zap.Error(err))
 	}
 
-	s.mongoDSN = s.mongoContainer.DSN()
+	s.mongoDSN = container.MongoDSN(s.mongoContainer)
 
 	err = s.mongoContainer.WaitReady(ctx)
 	if err != nil {
@@ -107,10 +107,7 @@ func (s *Suite) SetupSuite() {
 }
 
 func (s *Suite) TearDownSuite() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	err := s.mongoContainer.Stop(ctx)
+	err := s.mongoContainer.Stop()
 	if err != nil {
 		s.log.Panic("stop container", zap.Error(err))
 	}

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/sladonia/common-lb/dockertool"
-	"github.com/sladonia/common-lb/dockertool/dockermongo"
 	"github.com/sladonia/common-lb/logger"
+	"github.com/sladonia/dockert"
+	"github.com/sladonia/dockert/container"
 	"github.com/sladonia/todo-sv/internal/mongodb"
 	"github.com/sladonia/todo-sv/internal/todo"
 	"github.com/sladonia/todo-sv/pkg/todopb"
@@ -62,15 +62,15 @@ var projectFixtureInserted2 = &todopb.Project{
 type Suite struct {
 	suite.Suite
 
-	log            *zap.Logger
-	dockerPool     *dockertest.Pool
-	db             *mongo.Database
-	mongoContainer dockertool.Container
-	natsContainer  dockertool.Container
-	mongoDSN       string
-	storage        todo.Storage
-	pubSub         todo.PubSub
-	service        todopb.ToDoServiceServer
+	log               *zap.Logger
+	dockerPool        *dockertest.Pool
+	db                *mongo.Database
+	containerRegistry *dockert.Registry
+	mongoDSN          string
+	natsDSN           string
+	storage           todo.Storage
+	pubSub            todo.PubSub
+	service           todopb.ToDoServiceServer
 }
 
 func (s *Suite) SetupSuite() {
@@ -86,22 +86,23 @@ func (s *Suite) SetupSuite() {
 		s.log.Panic("init docker pool", zap.Error(err))
 	}
 
-	s.mongoContainer = dockermongo.NewDefault(s.log)
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	err = s.mongoContainer.Start(ctx, s.dockerPool)
+	mongoContainer := container.NewMongo()
+	natsContainer := container.NewNats()
+
+	s.containerRegistry = dockert.NewRegistry(s.dockerPool).
+		Add(mongoContainer).
+		Add(natsContainer)
+
+	err = s.containerRegistry.StartAndWaitReady(ctx)
 	if err != nil {
-		s.log.Panic("start mongo container", zap.Error(err))
+		s.log.Panic("start registry", zap.Error(err))
 	}
 
-	s.mongoDSN = s.mongoContainer.DSN()
-
-	err = s.mongoContainer.WaitReady(ctx)
-	if err != nil {
-		s.log.Panic("mongo container start timeout", zap.Error(err))
-	}
+	s.mongoDSN = container.MongoDSN(mongoContainer)
+	s.natsDSN = container.NatsDSN(natsContainer)
 
 	s.db, err = mongodb.Connect(ctx, s.mongoDSN, projectDBName)
 	if err != nil {
@@ -114,12 +115,9 @@ func (s *Suite) SetupSuite() {
 }
 
 func (s *Suite) TearDownSuite() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	err := s.mongoContainer.Stop(ctx)
+	err := s.containerRegistry.Stop()
 	if err != nil {
-		s.log.Panic("stop container", zap.Error(err))
+		s.log.Panic("stop registry", zap.Error(err))
 	}
 }
 

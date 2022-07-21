@@ -29,27 +29,27 @@ func NewProject(r *CreateProjectRequest) *Project {
 }
 
 func (x *Project) WithTask(task *Task) *Project {
-	updated := *x
+	updated := x.clone()
 
 	updated.Tasks[task.Id] = task
 	updated.Version = xid.New().String()
 	updated.UpdatedAt = timestampNowMilliseconds()
 
-	return &updated
+	return updated
 }
 
 func (x *Project) WithoutTask(taskID string) *Project {
-	updated := *x
+	updated := x.clone()
 
 	delete(updated.Tasks, taskID)
 	updated.Version = xid.New().String()
 	updated.UpdatedAt = timestampNowMilliseconds()
 
-	return &updated
+	return updated
 }
 
 func (x *Project) Update(r *UpdateProjectRequest) *Project {
-	updated := *x
+	updated := x.clone()
 
 	fm := r.FieldMask
 	fieldsSet := set.NewSet(fm.Paths...)
@@ -67,7 +67,31 @@ func (x *Project) Update(r *UpdateProjectRequest) *Project {
 	updated.Version = xid.New().String()
 	updated.UpdatedAt = timestampNowMilliseconds()
 
-	return &updated
+	return updated
+}
+
+func (x *Project) clone() *Project {
+	participants := make([]string, len(x.Participants))
+	copy(participants, x.Participants)
+
+	tasks := make(map[string]*Task, len(x.Tasks))
+	for id, task := range x.Tasks {
+		tasks[id] = task.clone()
+	}
+
+	createdAt := *x.CreatedAt
+	updatedAt := *x.UpdatedAt
+
+	return &Project{
+		Id:           x.Id,
+		Name:         x.Name,
+		OwnerId:      x.OwnerId,
+		Participants: participants,
+		Tasks:        tasks,
+		CreatedAt:    &createdAt,
+		UpdatedAt:    &updatedAt,
+		Version:      x.Version,
+	}
 }
 
 func (x *Project) TaskList() []*Task {

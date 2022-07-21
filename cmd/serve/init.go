@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/sladonia/common-lb/logger"
+	"github.com/sladonia/todo-sv/internal/logger"
 	"github.com/sladonia/todo-sv/internal/mongodb"
 	"github.com/sladonia/todo-sv/internal/todo"
 	"github.com/sladonia/todo-sv/pkg/todopb"

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/sladonia/common-lb/logger"
 	"github.com/sladonia/dockert"
 	"github.com/sladonia/dockert/container"
+	"github.com/sladonia/todo-sv/internal/logger"
 	"github.com/sladonia/todo-sv/internal/mongodb"
 	"github.com/sladonia/todo-sv/internal/todo"
 	"github.com/sladonia/todo-sv/pkg/todopb"

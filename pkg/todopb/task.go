@@ -30,7 +30,7 @@ func NewTask(r *AddTaskRequest) *Task {
 }
 
 func (x *Task) UpdateTask(r *UpdateTaskRequest) *Task {
-	updated := *x
+	updated := x.clone()
 
 	fm := r.FieldMask
 
@@ -61,5 +61,25 @@ func (x *Task) UpdateTask(r *UpdateTaskRequest) *Task {
 	x.Version = xid.New().String()
 	x.UpdatedAt = timestamppb.Now()
 
-	return &updated
+	return updated
+}
+
+func (x *Task) clone() *Task {
+	tags := make([]string, len(x.Tags))
+	copy(tags, x.Tags)
+
+	createdAt := *x.CreatedAt
+	updatedAt := *x.UpdatedAt
+
+	return &Task{
+		Id:          x.Id,
+		Title:       x.Title,
+		Description: x.Description,
+		Tags:        tags,
+		IsImportant: x.IsImportant,
+		IsFinished:  x.IsFinished,
+		CreatedAt:   &createdAt,
+		UpdatedAt:   &updatedAt,
+		Version:     x.Version,
+	}
 }

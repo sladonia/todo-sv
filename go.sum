@@ -168,8 +168,8 @@ github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
-github.com/sladonia/dockert v0.0.0-20220720153703-c8b11fff19a8 h1:pqKbG4E0Zp2qe2XDPvZ8rJMczdUzEqLci08m/Om0U8o=
-github.com/sladonia/dockert v0.0.0-20220720153703-c8b11fff19a8/go.mod h1:AbBEcQFiwmBzDqruFRMPS3pxh9/PKFyRrYGTJ/EeSEA=
+github.com/sladonia/dockert v1.0.0 h1:6ExMkrWNW9RSEdnVtA8NN7KPYho7rhlY4WPfFcyX0Is=
+github.com/sladonia/dockert v1.0.0/go.mod h1:AbBEcQFiwmBzDqruFRMPS3pxh9/PKFyRrYGTJ/EeSEA=
 github.com/spf13/afero v1.3.3/go.mod h1:5KUK8ByomD5Ti5Artl0RtHeI5pTF7MIDuXL3yY520V4=
 github.com/spf13/afero v1.6.0/go.mod h1:Ai8FlHk4v/PARR026UzYexafAt9roJ7LcLMAmO6Z93I=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=

@@ -9,7 +9,7 @@ require (
 	github.com/nats-io/nats.go v1.16.0
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/rs/xid v1.4.0
-	github.com/sladonia/dockert v0.0.0-20220720153703-c8b11fff19a8
+	github.com/sladonia/dockert v1.0.0
 	github.com/stretchr/testify v1.7.4
 	go.mongodb.org/mongo-driver v1.9.1
 	go.uber.org/zap v1.21.0

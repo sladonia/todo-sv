@@ -104,13 +104,36 @@ func (s *Suite) SetupSuite() {
 	s.mongoDSN = container.MongoDSN(mongoContainer)
 	s.natsDSN = container.NatsDSN(natsContainer)
 
+	s.log.Info("mongo DSN", zap.String("DSN", s.mongoDSN))
+	s.log.Info("nats DSN", zap.String("DSN", s.natsDSN))
+
 	s.db, err = mongodb.Connect(ctx, s.mongoDSN, projectDBName)
 	if err != nil {
 		s.log.Panic("failed to connect mongo", zap.Error(err))
 	}
 
 	s.storage = todo.NewStorage(s.db, projectsCollectionName)
-	s.pubSub = todo.NewNopPubSub()
+
+	s.pubSub, err = todo.NewNatsPubSub(s.natsDSN)
+	if err != nil {
+		s.log.Panic("create pub-sub", zap.Error(err))
+	}
+
+	eventDistributor := todo.NewUserEventsDistributor(
+		"user-worker-group",
+		todopb.NewProjectSubject("*", "*"),
+		s.pubSub,
+		s.pubSub,
+		s.log,
+	)
+
+	go func() {
+		err := eventDistributor.Start(context.Background())
+		if err != nil {
+			s.log.Panic("event distributor", zap.Error(err))
+		}
+	}()
+
 	s.service = todo.NewService(s.log, s.storage, s.pubSub)
 }
 

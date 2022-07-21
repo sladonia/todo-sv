@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"time"
 
 	"github.com/sladonia/todo-sv/internal/todo"
 	"github.com/sladonia/todo-sv/pkg/todopb"
@@ -64,6 +65,7 @@ func (s *Suite) TestGetProject() {
 }
 
 func (s *Suite) TestCreateProject() {
+	ownerID := "4"
 	ctx := context.Background()
 
 	cases := []struct {
@@ -76,12 +78,12 @@ func (s *Suite) TestCreateProject() {
 			name: "success",
 			request: &todopb.CreateProjectRequest{
 				Name:         "home stuff",
-				OwnerId:      "4",
+				OwnerId:      ownerID,
 				Participants: []string{"5", "6"},
 			},
 			expected: &todopb.Project{
 				Name:         "home stuff",
-				OwnerId:      "4",
+				OwnerId:      ownerID,
 				Participants: []string{"5", "6"},
 				Tasks:        nil,
 			},
@@ -491,4 +493,46 @@ func (s *Suite) TestDeleteProject() {
 			}
 		})
 	}
+}
+
+func (s *Suite) TestSubscribeToProjectsUpdates() {
+	ctx := context.Background()
+
+	r := &todopb.ProjectsUpdatesRequest{
+		UserId:   projectFixtureInserted1.OwnerId,
+		DeviceId: "1",
+	}
+
+	subscribeServer := newMockSubscribeServer()
+
+	go func() {
+		err := s.service.SubscribeToProjectsUpdates(r, subscribeServer)
+		s.Require().NoError(err)
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+
+	addTask := &todopb.AddTaskRequest{
+		Title:       "to buy something",
+		ProjectId:   "2",
+		UserId:      "1",
+		Description: "just buy",
+		Tags:        []string{"groceries"},
+		IsImportant: true,
+	}
+
+	_, err := s.service.AddTask(ctx, addTask)
+	s.NoError(err)
+
+	ev := <-subscribeServer.eventCh
+	s.Equal(todopb.EventType_PROJECT_UPDATED, ev.Type)
+	s.Len(ev.Project.Tasks, 1)
+
+	_, err = s.service.DeleteProject(ctx, &todopb.DeleteProjectRequest{
+		ProjectId: "2",
+		UserId:    "1",
+	})
+
+	ev = <-subscribeServer.eventCh
+	s.Equal(todopb.EventType_PROJECT_DELETED, ev.Type)
 }
